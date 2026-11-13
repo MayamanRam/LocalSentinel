@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="LocalSentinel/LocalSentinel.csproj" />
+  <Project Path="LocalSentinel.Tests/LocalSentinel.Tests.csproj" />
+</Solution>

@@ -1,0 +1,850 @@
+<Window x:Class="LocalSentinel.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="LocalSentinel - Endpoint Detection &amp; Forensics Monitor"
+        Height="820"
+        Width="1380"
+        MinHeight="700"
+        MinWidth="1050"
+        WindowStartupLocation="CenterScreen"
+        Background="#0B0F19">
+
+    <Window.Resources>
+
+        <!-- Base DataGrid Style with Virtualization Enabled -->
+        <Style x:Key="EvidenceGridStyle" TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="CanUserDeleteRows" Value="False"/>
+            <Setter Property="CanUserResizeRows" Value="False"/>
+            <Setter Property="CanUserReorderColumns" Value="True"/>
+            <Setter Property="CanUserSortColumns" Value="True"/>
+            <Setter Property="SelectionMode" Value="Single"/>
+            <Setter Property="SelectionUnit" Value="FullRow"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="RowBackground" Value="#111827"/>
+            <Setter Property="AlternatingRowBackground" Value="#0F172A"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#1E293B"/>
+            <Setter Property="VerticalGridLinesBrush" Value="#1E293B"/>
+            <Setter Property="RowHeight" Value="36"/>
+            <Setter Property="ColumnHeaderHeight" Value="38"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="EnableRowVirtualization" Value="True"/>
+            <Setter Property="EnableColumnVirtualization" Value="True"/>
+            <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True"/>
+            <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling"/>
+            <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style TargetType="DataGridCell">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#E2E8F0"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#1E3A8A"/>
+                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="DataGridRow">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1E293B"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#1E3A8A"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- TabControl & TabItem Modern Dark Styling -->
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+
+        <Style TargetType="TabItem">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="TabBorder"
+                                Background="#111827"
+                                BorderBrush="#1F2937"
+                                BorderThickness="1,1,1,0"
+                                CornerRadius="6,6,0,0"
+                                Margin="0,0,6,0"
+                                Padding="16,10"
+                                Cursor="Hand">
+                            <ContentPresenter ContentSource="Header"
+                                              RecognizesAccessKey="True"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="#1E293B"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="#0F172A"/>
+                                <Setter TargetName="TabBorder" Property="BorderBrush" Value="#38BDF8"/>
+                                <Setter TargetName="TabBorder" Property="BorderThickness" Value="1,2,1,0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Card Container Style -->
+        <Style x:Key="MetricCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="BorderBrush" Value="#1F2937"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="Margin" Value="0,0,14,0"/>
+        </Style>
+
+        <Style x:Key="SectionBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="#0F172A"/>
+            <Setter Property="BorderBrush" Value="#1E293B"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="64"/>   <!-- Header Bar -->
+            <RowDefinition Height="96"/>   <!-- KPI Stat Cards Row -->
+            <RowDefinition Height="*"/>    <!-- Main Tabbed View -->
+            <RowDefinition Height="32"/>   <!-- Footer Status Strip -->
+        </Grid.RowDefinitions>
+
+        <!-- Row 0: Top Bar -->
+        <Border Grid.Row="0"
+                Background="#0A0E17"
+                BorderBrush="#1E293B"
+                BorderThickness="0,0,0,1">
+            <Grid Margin="20,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Brand / Title -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Background="#0284C7" CornerRadius="6" Width="32" Height="32" Margin="0,0,12,0">
+                        <TextBlock Text="🛡" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="LOCAL" Foreground="#38BDF8" FontSize="18" FontWeight="ExtraBold"/>
+                            <TextBlock Text="SENTINEL" Foreground="White" FontSize="18" FontWeight="ExtraBold"/>
+                            <Border Background="#1E293B" CornerRadius="4" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="EDR v2.0" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Endpoint Threat Detection, Forensics &amp; Behavioral Auditing"
+                                   Foreground="#64748B" FontSize="11" Margin="0,1,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Action Toolbar -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="ToggleMonitoringBtn"
+                            Content="⏸ Pause"
+                            Background="#1E293B"
+                            Foreground="#E2E8F0"
+                            BorderBrush="#334155"
+                            BorderThickness="1"
+                            Padding="12,6"
+                            FontWeight="SemiBold"
+                            FontSize="12"
+                            Cursor="Hand"
+                            Margin="0,0,10,0"
+                            Click="ToggleMonitoring_Click"/>
+
+                    <Button x:Name="ClearLogsBtn"
+                            Content="🗑 Clear Session"
+                            Background="#1E293B"
+                            Foreground="#94A3B8"
+                            BorderBrush="#334155"
+                            BorderThickness="1"
+                            Padding="12,6"
+                            FontSize="12"
+                            Cursor="Hand"
+                            Margin="0,0,10,0"
+                            Click="ClearLogs_Click"/>
+
+                    <Button x:Name="ExportReportBtn"
+                            Content="📦 Export Forensics"
+                            Background="#0284C7"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Padding="14,6"
+                            FontWeight="SemiBold"
+                            FontSize="12"
+                            Cursor="Hand"
+                            Margin="0,0,14,0"
+                            Click="ExportReport_Click"/>
+
+                    <!-- Overall Engine Status Badge -->
+                    <Border x:Name="OverallStatusBorder"
+                            Background="#064E3B"
+                            BorderBrush="#059669"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="10,5"
+                            VerticalAlignment="Center">
+                        <TextBlock x:Name="HeaderStatusText"
+                                   Text="● ACTIVE MONITORING"
+                                   Foreground="#34D399"
+                                   FontSize="11"
+                                   FontWeight="Bold"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Row 1: KPI Stat Cards -->
+        <Border Grid.Row="1" Background="#0B0F19" Padding="20,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Card 1: System Status -->
+                <Border Grid.Column="0" Style="{StaticResource MetricCardStyle}">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="SYSTEM STATUS" Foreground="#64748B" FontSize="10" FontWeight="Bold"/>
+                        <TextBlock x:Name="MonitoringStatusText" Text="Active" Foreground="#38BDF8" FontSize="18" FontWeight="Bold" Margin="0,3,0,0"/>
+                        <TextBlock Text="4 Collectors Online" Foreground="#94A3B8" FontSize="10" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Card 2: Security Alerts -->
+                <Border Grid.Column="1" Style="{StaticResource MetricCardStyle}">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="SECURITY ALERTS" Foreground="#EF4444" FontSize="10" FontWeight="Bold"/>
+                        <TextBlock x:Name="SecurityAlertCountText" Text="0" Foreground="#F87171" FontSize="20" FontWeight="Bold" Margin="0,2,0,0"/>
+                        <TextBlock x:Name="AlertsSubtext" Text="MITRE ATT&amp;CK Detections" Foreground="#94A3B8" FontSize="10" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Card 3: Session Events -->
+                <Border Grid.Column="2" Style="{StaticResource MetricCardStyle}">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="TOTAL EVENTS" Foreground="#64748B" FontSize="10" FontWeight="Bold"/>
+                        <TextBlock x:Name="EventCountText" Text="0" Foreground="White" FontSize="20" FontWeight="Bold" Margin="0,2,0,0"/>
+                        <TextBlock Text="Telemetry Records" Foreground="#94A3B8" FontSize="10" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Card 4: Processes Monitored -->
+                <Border Grid.Column="3" Style="{StaticResource MetricCardStyle}">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="PROCESS INVENTORY" Foreground="#64748B" FontSize="10" FontWeight="Bold"/>
+                        <TextBlock x:Name="ProcessCountMetricText" Text="0" Foreground="White" FontSize="20" FontWeight="Bold" Margin="0,2,0,0"/>
+                        <TextBlock Text="Active Executables" Foreground="#94A3B8" FontSize="10" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Card 5: Network Sockets -->
+                <Border Grid.Column="4" Style="{StaticResource MetricCardStyle}">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="TCP CONNECTIONS" Foreground="#64748B" FontSize="10" FontWeight="Bold"/>
+                        <TextBlock x:Name="NetworkCountMetricText" Text="0" Foreground="White" FontSize="20" FontWeight="Bold" Margin="0,2,0,0"/>
+                        <TextBlock Text="Active Sockets" Foreground="#94A3B8" FontSize="10" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Card 6: File Watchers & USB -->
+                <Border Grid.Column="5" Style="{StaticResource MetricCardStyle}" Margin="0">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="STORAGE &amp; PERIPHERALS" Foreground="#64748B" FontSize="10" FontWeight="Bold"/>
+                        <TextBlock x:Name="StorageMetricText" Text="3 Dirs | 0 USB" Foreground="White" FontSize="16" FontWeight="Bold" Margin="0,4,0,0"/>
+                        <TextBlock Text="FIM Watchers &amp; Removable" Foreground="#94A3B8" FontSize="10" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Row 2: Tabbed Forensics & Monitoring Center -->
+        <Border Grid.Row="2" Margin="20,4,20,10">
+            <TabControl x:Name="MainTabs">
+
+                <!-- TAB 1: SECURITY ALERTS -->
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🚨 " FontSize="12"/>
+                            <TextBlock Text="Threat Alerts" Foreground="#F87171" FontWeight="SemiBold" FontSize="13"/>
+                            <Border x:Name="AlertTabBadge" Background="#DC2626" CornerRadius="10" MinWidth="18" Height="18" Margin="8,0,0,0" Padding="4,0" HorizontalAlignment="Center">
+                                <TextBlock x:Name="AlertTabBadgeCount" Text="0" Foreground="White" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </StackPanel>
+                    </TabItem.Header>
+
+                    <Grid Margin="0,10,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Alerts Filter Bar -->
+                        <Grid Grid.Row="0" Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="Severity Filter:" Foreground="#94A3B8" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <ComboBox x:Name="AlertSeverityFilterCombo"
+                                          Width="120"
+                                          Height="32"
+                                          Background="#1E293B"
+                                          Foreground="White"
+                                          BorderBrush="#334155"
+                                          SelectedIndex="0"
+                                          SelectionChanged="AlertSeverityFilter_Changed">
+                                    <ComboBoxItem Content="All Severities"/>
+                                    <ComboBoxItem Content="Critical"/>
+                                    <ComboBoxItem Content="High"/>
+                                    <ComboBoxItem Content="Medium"/>
+                                    <ComboBoxItem Content="Low"/>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <Border Grid.Column="1" Background="#111827" BorderBrush="#1F2937" BorderThickness="1" CornerRadius="6" Height="34" Margin="14,0">
+                                <TextBox x:Name="AlertSearchBox"
+                                         Padding="10,0"
+                                         Background="Transparent"
+                                         Foreground="White"
+                                         BorderThickness="0"
+                                         VerticalContentAlignment="Center"
+                                         FontSize="13"
+                                         TextChanged="AlertSearchBox_TextChanged"/>
+                            </Border>
+
+                            <Button Grid.Column="2" Content="Clear Filter" Height="34" Padding="12,0" Background="#1E293B" Foreground="#94A3B8" BorderBrush="#334155" BorderThickness="1" Cursor="Hand" Click="ClearAlertSearch_Click"/>
+                        </Grid>
+
+                        <!-- Alerts DataGrid -->
+                        <Border Grid.Row="1" Style="{StaticResource SectionBorderStyle}">
+                            <Grid>
+                                <DataGrid x:Name="AlertsTable" Style="{StaticResource EvidenceGridStyle}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Time" Width="90" Binding="{Binding Timestamp, StringFormat={}{0:HH:mm:ss}}"/>
+
+                                        <!-- Severity with Colored Pill -->
+                                        <DataGridTemplateColumn Header="Severity" Width="100">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{Binding SeverityBadgeColor}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding SeverityText}" Foreground="White" FontSize="11" FontWeight="Bold"/>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTextColumn Header="MITRE Technique" Width="130" Binding="{Binding MitreTechniqueId}"/>
+                                        <DataGridTextColumn Header="Tactic" Width="120" Binding="{Binding MitreTactic}"/>
+                                        <DataGridTextColumn Header="Rule Name" Width="220" Binding="{Binding RuleName}"/>
+                                        <DataGridTextColumn Header="Source" Width="90" Binding="{Binding Source}"/>
+                                        <DataGridTextColumn Header="Entity" Width="200" Binding="{Binding EntityIdentifier}"/>
+                                        <DataGridTextColumn Header="Description" Width="380" Binding="{Binding Description}"/>
+                                        <DataGridTextColumn Header="Remediation" Width="350" Binding="{Binding Remediation}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <TextBlock x:Name="EmptyAlertsText"
+                                           Text="No security alerts detected. System activity normal."
+                                           Foreground="#64748B" FontSize="14"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           IsHitTestVisible="False"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+                <!-- TAB 2: PROCESS MONITOR -->
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⚙ " FontSize="12"/>
+                            <TextBlock Text="Process Inventory" Foreground="#CBD5E1" FontWeight="SemiBold" FontSize="13"/>
+                        </StackPanel>
+                    </TabItem.Header>
+
+                    <Grid Margin="0,10,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Process Search Bar -->
+                        <Grid Grid.Row="0" Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Background="#111827" BorderBrush="#1F2937" BorderThickness="1" CornerRadius="6" Height="34" Margin="0,0,10,0">
+                                <TextBox x:Name="SearchBox"
+                                         Padding="10,0"
+                                         Background="Transparent"
+                                         Foreground="White"
+                                         BorderThickness="0"
+                                         VerticalContentAlignment="Center"
+                                         FontSize="13"
+                                         TextChanged="SearchBox_TextChanged"/>
+                            </Border>
+                            <Button Grid.Column="1" Content="Clear Search" Height="34" Padding="14,0" Background="#1E293B" Foreground="#94A3B8" BorderBrush="#334155" BorderThickness="1" Cursor="Hand" Click="ClearSearch_Click"/>
+                        </Grid>
+
+                        <!-- Process DataGrid -->
+                        <Border Grid.Row="1" Style="{StaticResource SectionBorderStyle}">
+                            <Grid>
+                                <DataGrid x:Name="ActivityTable" Style="{StaticResource EvidenceGridStyle}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Time" Width="85" Binding="{Binding Timestamp, StringFormat={}{0:HH:mm:ss}}"/>
+                                        <DataGridTextColumn Header="Process Name" Width="150" Binding="{Binding ProcessName}"/>
+                                        <DataGridTextColumn Header="PID" Width="70" Binding="{Binding ProcessId}"/>
+                                        <DataGridTextColumn Header="Parent Process" Width="140" Binding="{Binding ParentProcessName}"/>
+                                        <DataGridTextColumn Header="Parent PID" Width="90" Binding="{Binding ParentProcessId}"/>
+                                        <DataGridTextColumn Header="Executable Path" Width="280" Binding="{Binding ExecutablePath}"/>
+                                        <DataGridTextColumn Header="Command Line" Width="320" Binding="{Binding CommandLine}"/>
+                                        <DataGridTextColumn Header="SHA-256 Hash" Width="360" Binding="{Binding Sha256}"/>
+                                        <DataGridTextColumn Header="Signature" Width="100" Binding="{Binding SignatureStatus}"/>
+
+                                        <DataGridTemplateColumn Header="Trusted" Width="80">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{Binding TrustBadgeColor}" CornerRadius="3" Padding="5,1" HorizontalAlignment="Center">
+                                                        <TextBlock Text="{Binding SignatureTrustDisplay}" Foreground="White" FontSize="11" FontWeight="Bold"/>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTextColumn Header="Signer" Width="200" Binding="{Binding SignerName}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <TextBlock x:Name="EmptyActivityText"
+                                           Text="No process telemetry recorded yet."
+                                           Foreground="#64748B" FontSize="14"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           IsHitTestVisible="False"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+                <!-- TAB 3: FILE INTEGRITY -->
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📁 " FontSize="12"/>
+                            <TextBlock Text="File Activity (FIM)" Foreground="#CBD5E1" FontWeight="SemiBold" FontSize="13"/>
+                        </StackPanel>
+                    </TabItem.Header>
+
+                    <Grid Margin="0,10,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- File Search Bar -->
+                        <Grid Grid.Row="0" Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Background="#111827" BorderBrush="#1F2937" BorderThickness="1" CornerRadius="6" Height="34" Margin="0,0,10,0">
+                                <TextBox x:Name="FileSearchBox"
+                                         Padding="10,0"
+                                         Background="Transparent"
+                                         Foreground="White"
+                                         BorderThickness="0"
+                                         VerticalContentAlignment="Center"
+                                         FontSize="13"
+                                         TextChanged="FileSearchBox_TextChanged"/>
+                            </Border>
+                            <Button Grid.Column="1" Content="Clear Search" Height="34" Padding="14,0" Background="#1E293B" Foreground="#94A3B8" BorderBrush="#334155" BorderThickness="1" Cursor="Hand" Click="ClearFileSearch_Click"/>
+                        </Grid>
+
+                        <!-- File DataGrid -->
+                        <Border Grid.Row="1" Style="{StaticResource SectionBorderStyle}">
+                            <Grid>
+                                <DataGrid x:Name="FileActivityTable" Style="{StaticResource EvidenceGridStyle}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Time" Width="90" Binding="{Binding Timestamp, StringFormat={}{0:HH:mm:ss}}"/>
+
+                                        <DataGridTemplateColumn Header="Event Type" Width="110">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{Binding EventTypeBadgeColor}" CornerRadius="3" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding EventType}" Foreground="White" FontSize="11" FontWeight="Bold"/>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTextColumn Header="File Name" Width="240" Binding="{Binding FileName}"/>
+                                        <DataGridTextColumn Header="Full Path" Width="460" Binding="{Binding FullPath}"/>
+                                        <DataGridTextColumn Header="Old Path / Rename Origin" Width="420" Binding="{Binding OldPath}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <TextBlock x:Name="EmptyFileActivityText"
+                                           Text="No filesystem changes captured yet (Watching Desktop, Documents, Downloads)."
+                                           Foreground="#64748B" FontSize="14"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           IsHitTestVisible="False"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+                <!-- TAB 4: NETWORK CONNECTIONS -->
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🌐 " FontSize="12"/>
+                            <TextBlock Text="Network Sockets" Foreground="#CBD5E1" FontWeight="SemiBold" FontSize="13"/>
+                        </StackPanel>
+                    </TabItem.Header>
+
+                    <Grid Margin="0,10,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Network Search Bar -->
+                        <Grid Grid.Row="0" Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Background="#111827" BorderBrush="#1F2937" BorderThickness="1" CornerRadius="6" Height="34" Margin="0,0,10,0">
+                                <TextBox x:Name="NetworkSearchBox"
+                                         Padding="10,0"
+                                         Background="Transparent"
+                                         Foreground="White"
+                                         BorderThickness="0"
+                                         VerticalContentAlignment="Center"
+                                         FontSize="13"
+                                         TextChanged="NetworkSearchBox_TextChanged"/>
+                            </Border>
+                            <Button Grid.Column="1" Content="Clear Search" Height="34" Padding="14,0" Background="#1E293B" Foreground="#94A3B8" BorderBrush="#334155" BorderThickness="1" Cursor="Hand" Click="ClearNetworkSearch_Click"/>
+                        </Grid>
+
+                        <!-- Network DataGrid -->
+                        <Border Grid.Row="1" Style="{StaticResource SectionBorderStyle}">
+                            <Grid>
+                                <DataGrid x:Name="NetworkActivityTable" Style="{StaticResource EvidenceGridStyle}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Time" Width="90" Binding="{Binding Timestamp, StringFormat={}{0:HH:mm:ss}}"/>
+                                        <DataGridTextColumn Header="Process Name" Width="160" Binding="{Binding ProcessName}"/>
+                                        <DataGridTextColumn Header="PID" Width="75" Binding="{Binding ProcessId}"/>
+                                        <DataGridTextColumn Header="Protocol" Width="85" Binding="{Binding Protocol}"/>
+                                        <DataGridTextColumn Header="Local Address" Width="160" Binding="{Binding LocalAddress}"/>
+                                        <DataGridTextColumn Header="Local Port" Width="95" Binding="{Binding LocalPort}"/>
+                                        <DataGridTextColumn Header="Remote Address" Width="160" Binding="{Binding RemoteAddress}"/>
+                                        <DataGridTextColumn Header="Remote Port" Width="105" Binding="{Binding RemotePort}"/>
+
+                                        <DataGridTemplateColumn Header="State" Width="110">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{Binding StateBadgeColor}" CornerRadius="3" Padding="5,1" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding ConnectionState}" Foreground="White" FontSize="11" FontWeight="SemiBold"/>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <TextBlock x:Name="EmptyNetworkActivityText"
+                                           Text="No active TCP connections detected."
+                                           Foreground="#64748B" FontSize="14"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           IsHitTestVisible="False"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+                <!-- TAB 5: USB PERIPHERALS -->
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🔌 " FontSize="12"/>
+                            <TextBlock Text="USB Storage" Foreground="#CBD5E1" FontWeight="SemiBold" FontSize="13"/>
+                        </StackPanel>
+                    </TabItem.Header>
+
+                    <Grid Margin="0,10,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- USB Search Bar -->
+                        <Grid Grid.Row="0" Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Background="#111827" BorderBrush="#1F2937" BorderThickness="1" CornerRadius="6" Height="34" Margin="0,0,10,0">
+                                <TextBox x:Name="UsbSearchBox"
+                                         Padding="10,0"
+                                         Background="Transparent"
+                                         Foreground="White"
+                                         BorderThickness="0"
+                                         VerticalContentAlignment="Center"
+                                         FontSize="13"
+                                         TextChanged="UsbSearchBox_TextChanged"/>
+                            </Border>
+                            <Button Grid.Column="1" Content="Clear Search" Height="34" Padding="14,0" Background="#1E293B" Foreground="#94A3B8" BorderBrush="#334155" BorderThickness="1" Cursor="Hand" Click="ClearUsbSearch_Click"/>
+                        </Grid>
+
+                        <!-- USB DataGrid -->
+                        <Border Grid.Row="1" Style="{StaticResource SectionBorderStyle}">
+                            <Grid>
+                                <DataGrid x:Name="UsbActivityTable" Style="{StaticResource EvidenceGridStyle}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Time" Width="90" Binding="{Binding Timestamp, StringFormat={}{0:HH:mm:ss}}"/>
+
+                                        <DataGridTemplateColumn Header="Action" Width="100">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{Binding EventTypeBadgeColor}" CornerRadius="3" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding EventType}" Foreground="White" FontSize="11" FontWeight="Bold"/>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTextColumn Header="Device Model" Width="260" Binding="{Binding DeviceName}"/>
+                                        <DataGridTextColumn Header="Serial Number" Width="200" Binding="{Binding SerialNumber}"/>
+                                        <DataGridTextColumn Header="Plug-and-Play Device ID" Width="480" Binding="{Binding PnpDeviceId}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <TextBlock x:Name="EmptyUsbActivityText"
+                                           Text="No removable USB storage devices currently attached or observed."
+                                           Foreground="#64748B" FontSize="14"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           IsHitTestVisible="False"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+                <!-- TAB 6: FORENSICS & AUDIT DIAGNOSTICS -->
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📋 " FontSize="12"/>
+                            <TextBlock Text="Forensics &amp; Diagnostics" Foreground="#CBD5E1" FontWeight="SemiBold" FontSize="13"/>
+                        </StackPanel>
+                    </TabItem.Header>
+
+                    <ScrollViewer Margin="0,15,0,0" VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <!-- Export Operations Card -->
+                            <Border Background="#111827" BorderBrush="#1F2937" BorderThickness="1" CornerRadius="8" Padding="20" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <TextBlock Text="Forensic Evidence Package Export" Foreground="White" FontSize="16" FontWeight="Bold"/>
+                                    <TextBlock Text="Export complete cryptographic incident logs in SIEM-ready JSON or forensic CSV formats." Foreground="#94A3B8" FontSize="13" Margin="0,4,0,14"/>
+
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="📦 Export All Evidence (JSON Snapshot)"
+                                                Background="#0284C7" Foreground="White" FontWeight="SemiBold"
+                                                Padding="16,8" BorderThickness="0" Cursor="Hand" Margin="0,0,12,0"
+                                                Click="ExportJsonSnapshot_Click"/>
+
+                                        <Button Content="📊 Export Alerts (CSV)"
+                                                Background="#1E293B" Foreground="#E2E8F0"
+                                                Padding="14,8" BorderBrush="#334155" BorderThickness="1" Cursor="Hand" Margin="0,0,12,0"
+                                                Click="ExportAlertsCsv_Click"/>
+
+                                        <Button Content="⚙ Export Process Telemetry (CSV)"
+                                                Background="#1E293B" Foreground="#E2E8F0"
+                                                Padding="14,8" BorderBrush="#334155" BorderThickness="1" Cursor="Hand" Margin="0,0,12,0"
+                                                Click="ExportProcessesCsv_Click"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Database & Storage Info -->
+                            <Border Background="#111827" BorderBrush="#1F2937" BorderThickness="1" CornerRadius="8" Padding="20" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <TextBlock Text="SQLite Forensics Database" Foreground="White" FontSize="16" FontWeight="Bold"/>
+                                    <TextBlock Text="Local persistent storage state and Write-Ahead Log (WAL) telemetry metrics." Foreground="#94A3B8" FontSize="13" Margin="0,4,0,14"/>
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="180"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="28"/>
+                                            <RowDefinition Height="28"/>
+                                            <RowDefinition Height="28"/>
+                                            <RowDefinition Height="28"/>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Database Location:" Foreground="#64748B"/>
+                                        <TextBlock x:Name="DbPathText" Grid.Row="0" Grid.Column="1" Text="C:\..." Foreground="#CBD5E1"/>
+
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Database Size on Disk:" Foreground="#64748B"/>
+                                        <TextBlock x:Name="DbSizeText" Grid.Row="1" Grid.Column="1" Text="0 KB" Foreground="#CBD5E1"/>
+
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="WAL Journal Mode:" Foreground="#64748B"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="Write-Ahead Logging (WAL Enabled, Normal Sync)" Foreground="#34D399" FontWeight="SemiBold"/>
+
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Total Stored Rows:" Foreground="#64748B"/>
+                                        <TextBlock x:Name="DbTotalRowsText" Grid.Row="3" Grid.Column="1" Text="0" Foreground="#38BDF8" FontWeight="SemiBold"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- MITRE ATT&CK Framework Mapping Summary -->
+                            <Border Background="#111827" BorderBrush="#1F2937" BorderThickness="1" CornerRadius="8" Padding="20">
+                                <StackPanel>
+                                    <TextBlock Text="MITRE ATT&amp;CK® Active Detection Rules" Foreground="White" FontSize="16" FontWeight="Bold"/>
+                                    <TextBlock Text="Heuristic &amp; behavioral detection signatures mapped to the Enterprise ATT&amp;CK matrix." Foreground="#94A3B8" FontSize="13" Margin="0,4,0,14"/>
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="140"/>
+                                            <ColumnDefinition Width="220"/>
+                                            <ColumnDefinition Width="140"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="28"/>
+                                            <RowDefinition Height="28"/>
+                                            <RowDefinition Height="28"/>
+                                            <RowDefinition Height="28"/>
+                                            <RowDefinition Height="28"/>
+                                            <RowDefinition Height="28"/>
+                                            <RowDefinition Height="28"/>
+                                            <RowDefinition Height="28"/>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="RULE-PROC-001" Foreground="#38BDF8" FontWeight="Bold"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="Obfuscated PowerShell Cradle" Foreground="White"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="2" Text="T1059.001 (Execution)" Foreground="#94A3B8"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="3" Text="Detects -enc, -w hidden, and IEX downloadstring payloads." Foreground="#64748B"/>
+
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="RULE-PROC-002" Foreground="#38BDF8" FontWeight="Bold"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="LOLBin Abuse (Certutil/Mshta)" Foreground="White"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="2" Text="T1218 / T1105" Foreground="#94A3B8"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="3" Text="Detects certutil -urlcache ingress &amp; inline mshta scripts." Foreground="#64748B"/>
+
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="RULE-PROC-003" Foreground="#EF4444" FontWeight="Bold"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="Inhibit Recovery (Shadow Delete)" Foreground="White"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="2" Text="T1490 (Impact)" Foreground="#94A3B8"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="3" Text="Detects vssadmin / wmic attempts to delete shadow copies." Foreground="#64748B"/>
+
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="RULE-PROC-004" Foreground="#F59E0B" FontWeight="Bold"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="1" Text="Untrusted Staging Execution" Foreground="White"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="2" Text="T1204.002 (Execution)" Foreground="#94A3B8"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="3" Text="Detects unsigned binaries running from Downloads or Temp." Foreground="#64748B"/>
+
+                                        <TextBlock Grid.Row="4" Grid.Column="0" Text="RULE-PROC-005" Foreground="#F59E0B" FontWeight="Bold"/>
+                                        <TextBlock Grid.Row="4" Grid.Column="1" Text="Masquerading Double Extension" Foreground="White"/>
+                                        <TextBlock Grid.Row="4" Grid.Column="2" Text="T1036.007 (Evasion)" Foreground="#94A3B8"/>
+                                        <TextBlock Grid.Row="4" Grid.Column="3" Text="Detects deceitful binaries disguised as .pdf.exe or .doc.exe." Foreground="#64748B"/>
+
+                                        <TextBlock Grid.Row="5" Grid.Column="0" Text="RULE-PROC-006" Foreground="#EF4444" FontWeight="Bold"/>
+                                        <TextBlock Grid.Row="5" Grid.Column="1" Text="Office Spawning Command Shell" Foreground="White"/>
+                                        <TextBlock Grid.Row="5" Grid.Column="2" Text="T1059.003 (Execution)" Foreground="#94A3B8"/>
+                                        <TextBlock Grid.Row="5" Grid.Column="3" Text="Detects Word / Excel / Reader spawning cmd or PowerShell." Foreground="#64748B"/>
+
+                                        <TextBlock Grid.Row="6" Grid.Column="0" Text="RULE-FILE-001" Foreground="#EF4444" FontWeight="Bold"/>
+                                        <TextBlock Grid.Row="6" Grid.Column="1" Text="Ransomware Extension Canary" Foreground="White"/>
+                                        <TextBlock Grid.Row="6" Grid.Column="2" Text="T1486 (Impact)" Foreground="#94A3B8"/>
+                                        <TextBlock Grid.Row="6" Grid.Column="3" Text="Detects mass modifications matching .locked, .crypto, etc." Foreground="#64748B"/>
+
+                                        <TextBlock Grid.Row="7" Grid.Column="0" Text="RULE-NET-001" Foreground="#38BDF8" FontWeight="Bold"/>
+                                        <TextBlock Grid.Row="7" Grid.Column="1" Text="Suspicious C2 Framework Ports" Foreground="White"/>
+                                        <TextBlock Grid.Row="7" Grid.Column="2" Text="T1071 (Command &amp; Control)" Foreground="#94A3B8"/>
+                                        <TextBlock Grid.Row="7" Grid.Column="3" Text="Detects active sockets to Metasploit, Cobalt Strike &amp; IRC." Foreground="#64748B"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+            </TabControl>
+        </Border>
+
+        <!-- Row 3: Footer Status Strip -->
+        <Border Grid.Row="3" Background="#0A0E17" BorderBrush="#1E293B" BorderThickness="0,1,0,0" Padding="20,0">
+            <Grid VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Host: " Foreground="#64748B" FontSize="11"/>
+                    <TextBlock x:Name="HostInfoText" Text="WINDOWS-ENDPOINT" Foreground="#94A3B8" FontSize="11" Margin="0,0,16,0"/>
+
+                    <TextBlock Text="Watchers: " Foreground="#64748B" FontSize="11"/>
+                    <TextBlock x:Name="WatchersCountText" Text="Desktop, Documents, Downloads" Foreground="#94A3B8" FontSize="11" Margin="0,0,16,0"/>
+                </StackPanel>
+
+                <TextBlock Grid.Column="1" HorizontalAlignment="Center" Text="Confidential Endpoint Telemetry — Authorized Cybersecurity Operations Only" Foreground="#475569" FontSize="11"/>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <TextBlock Text="Polling Intervals: " Foreground="#64748B" FontSize="11"/>
+                    <TextBlock Text="Proc 1s | Net 2s | USB 3s" Foreground="#94A3B8" FontSize="11"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

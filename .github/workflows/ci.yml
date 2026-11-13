@@ -1,0 +1,63 @@
+name: LocalSentinel CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Build, Test & Security Verification
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Verify .NET Environment
+        run: dotnet --info
+
+      - name: Restore Solution Dependencies
+        run: dotnet restore LocalSentinel.slnx
+
+      - name: Build Solution (Release)
+        run: dotnet build LocalSentinel.slnx --configuration Release --no-restore
+
+      - name: Execute Automated Test Suite
+        run: dotnet test LocalSentinel.Tests/LocalSentinel.Tests.csproj --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
+
+      - name: Audit NuGet Package Vulnerabilities
+        run: |
+          dotnet list LocalSentinel/LocalSentinel.csproj package --vulnerable
+          dotnet list LocalSentinel.Tests/LocalSentinel.Tests.csproj package --vulnerable
+
+      - name: Publish Standalone Binary (win-x64)
+        run: |
+          dotnet publish LocalSentinel/LocalSentinel.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:EnableCompressionInSingleFile=true `
+            -o ./publish/
+
+      - name: Generate Binary SHA-256 Checksum
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash -Algorithm SHA256 ./publish/LocalSentinel.exe).Hash
+          Set-Content -Path ./publish/SHA256SUMS.txt -Value "$hash  LocalSentinel.exe"
+          Write-Host "LocalSentinel.exe SHA-256: $hash"
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: LocalSentinel-v2.0-win-x64
+          path: ./publish/
+          retention-days: 14
